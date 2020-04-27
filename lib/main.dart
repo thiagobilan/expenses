@@ -3,7 +3,9 @@ import 'package:expenses/components/chart.dart';
 import 'package:expenses/components/transaction_form.dart';
 import 'package:expenses/components/transaction_list.dart';
 import 'package:expenses/models/transaction.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 main() => runApp(ExpensesApp());
@@ -73,7 +75,51 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  final List<Transaction> _transaction = [];
+  final List<Transaction> _transaction = [
+    Transaction(
+      date: DateTime.now().subtract(new Duration(days: 1)),
+      id: Random().nextDouble().toString(),
+      title: "Cinema",
+      value: 120,
+    ),
+    Transaction(
+      date: DateTime.now().subtract(new Duration(days: 3)),
+      id: Random().nextDouble().toString(),
+      title: "Teatro",
+      value: 220,
+    ),
+    Transaction(
+      date: DateTime.now().subtract(new Duration(days: 2)),
+      id: Random().nextDouble().toString(),
+      title: "Água",
+      value: 90,
+    ),
+    Transaction(
+      date: DateTime.now().subtract(new Duration(days: 5)),
+      id: Random().nextDouble().toString(),
+      title: "Compras",
+      value: 102.22,
+    ),
+    Transaction(
+      date: DateTime.now(),
+      id: Random().nextDouble().toString(),
+      title: "Light",
+      value: 133,
+    ),
+    Transaction(
+      date: DateTime.now().subtract(new Duration(days: 2)),
+      id: Random().nextDouble().toString(),
+      title: "Shopping",
+      value: 72.80,
+    ),
+    Transaction(
+      date: DateTime.now(),
+      id: Random().nextDouble().toString(),
+      title: "Escola",
+      value: 320.25,
+    ),
+  ];
+  bool _showChart = false;
 
   List<Transaction> get _recentTransactions {
     return _transaction.where((tr) {
@@ -85,6 +131,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   _openTransactionFormModal(BuildContext context) {
     showModalBottomSheet(
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25.0))),
       context: context,
       builder: (_) {
         return TransactionForm(_addTransaction);
@@ -94,26 +142,69 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Despesas Pessoais',
-          //style: TextStyle(fontFamily: 'OpenSans'),
-        ),
-        actions: <Widget>[
+    final mediaQuery = MediaQuery.of(context);
+    bool _isLandscape = mediaQuery.orientation == Orientation.landscape;
+    final appBar = AppBar(
+      title: Text('Despesas Pessoais'),
+      actions: <Widget>[
+        if (_isLandscape)
           IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => _openTransactionFormModal(context),
-          )
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Chart(_recentTransactions),
-            TransactionList(_transaction, _deleteTransaction),
-          ],
+            icon: Icon(_showChart ? Icons.list : Icons.show_chart),
+            onPressed: () {
+              setState(() {
+                _showChart = !_showChart;
+              });
+            },
+          ),
+        IconButton(
+          icon: Icon(Icons.add),
+          onPressed: () => _openTransactionFormModal(context),
+        ),
+      ],
+    );
+    final availabelHeight = mediaQuery.size.height -
+        appBar.preferredSize.height -
+        mediaQuery.padding.top;
+
+    return Scaffold(
+      appBar: appBar,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              // if (_isLandscape)
+              //   Row(
+              //     mainAxisAlignment: MainAxisAlignment.center,
+              //     children: <Widget>[
+              //       Text('Exibir Grafico'),
+              //       Switch(
+              //         value: _showChart,
+              //         onChanged: (value) {
+              //           setState(() {
+              //             _showChart = value;
+              //           });
+              //         },
+              //       ),
+              //     ],
+              //   ),
+              if (_showChart || !_isLandscape)
+                Container(
+                  height: availabelHeight * (_isLandscape ? 0.7 : 0.3),
+                  child: Chart(
+                    _recentTransactions,
+                  ),
+                ),
+              if (!_showChart || !_isLandscape)
+                Container(
+                  height: availabelHeight * (_isLandscape ? 1 : 0.7),
+                  child: TransactionList(
+                    _transaction,
+                    _deleteTransaction,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
